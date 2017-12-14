@@ -5,9 +5,8 @@
 #include "SPI.h"
 
 #define OLED 0x3C
-//#define OLED 0x57
 #define DS3231_I2C_ADDRESS 0x68
-#define LED   5
+#define LED   13 //use to be 5 for some reason.....
 #define OLED_RESET 10
 
 #define HEAT  0xFF23DC
@@ -18,21 +17,31 @@ IRsend irsend;
 Adafruit_SSD1306 display(OLED_RESET);
 int BUTTON = 9;
 int SWITCH = 12;
+int POT1 = A7;
+int POT2 = A2;
 
 void printTime();
 void getTime();
+int getTarger();
+String computeTarget(int, int);
+
 String B_minute;
 String B_second;
 String B_hour; 
 int B_dayOfMonth;
 int B_month;
 int B_year;
-int buttonState;
+
 int switchState;
+int buttonState;
+int HourState;
+int MinState; 
+int Hour;
+int Min; 
 
 int flag = 0;
 String check  = ""; 
-String target = "0650";
+String target = "";
 
 void setup(){
 
@@ -54,21 +63,16 @@ void loop() {
    
   if (switchState == HIGH){
     getTime(); 
-    Serial.println("HIGH");
-    digitalWrite(LED, HIGH);
     
     display.clearDisplay(); 
-
     display.setCursor(0, 5);
     display.print("Time: ");
     display.print(B_hour);
     display.print(":");
     display.print(B_minute); 
-
     display.setCursor(0, 20);
     display.print("Set:  ");
     display.print(target);
-    
     display.display();
 
     buttonState = digitalRead(BUTTON);
@@ -78,10 +82,17 @@ void loop() {
          irsend.sendNEC(HEAT, 32); //send IR code
          delay(300);
     }
+
+    HourState = analogRead(POT1); 
+    MinState = analogRead(POT2);
+    
+    Hour = map(HourState, 0, 1020, 0, 23);
+    Min = map(MinState, 0, 1020, 0, 59);
+    target = computeTarget(Hour, Min); 
+
     
   }
   else{
-    Serial.println("LOW");
     digitalWrite(LED, LOW);
     display.clearDisplay(); 
     display.display();
@@ -89,7 +100,8 @@ void loop() {
     Watchdog.sleep();
     delay(200); 
    
-    getTime(); 
+    getTime();
+    getTarget();
    //printTime();
     
     check.concat(B_hour);
@@ -102,32 +114,68 @@ void loop() {
     Serial.println(check); 
   
     if(check == target){
-      Serial.println("Target Met");
+      //Serial.println("Target Met");
       flag = 1;
       digitalWrite(LED, HIGH);
     }
   
   
     if(flag == 1){
-      delay(60010); //wait for just over a minuet to ensure the flag can't be set again.
-      irsend.sendNEC(HEAT, 32); //send IR code
+      delay(60010); //wait for just over a minute to ensure the flag can't be set again.
+      digitalWrite(LED, LOW); 
+      delay(100);   
+        irsend.sendNEC(HEAT, 32); //send IR code
+      digitalWrite(LED, HIGH);   
+      delay(100);
+      digitalWrite(LED, LOW);
       delay(300);
-      //digitalWrite(LED, LOW); 
+      
       flag = 0;
     }
   
      check = ""; //reset the check variable.
-  
-     Serial.print("flag = ");
-     Serial.println(flag); 
+     //Serial.print("flag = ");
+     //Serial.println(flag); 
      delay(200);
   }
 }
 
 
+int getTarget(){
+    HourState = analogRead(POT1); 
+    MinState = analogRead(POT2);
+    
+    Hour = map(HourState, 0, 1020, 0, 23);
+    Min = map(MinState, 0, 1020, 0, 59);
+    target = computeTarget(Hour, Min);   
+    target.remove(2,1); //remove the : 
+
+    return target.toInt();
+}
 
 
+String computeTarget(int pot1, int pot2){
+  String myTime;
+  int int_myHour = pot1;
+  int int_myMin = pot2; 
+  
+  String myHour = String(pot1);
+  String myMin = String(pot2);
 
+  if(int_myHour < 10){
+    myTime.concat("0");
+  }
+  myTime.concat(myHour); 
+  myTime.concat(":");
+
+  if(int_myMin < 10){
+    myTime.concat("0");
+  }
+  myTime.concat(myMin); 
+
+  return myTime;
+  //Serial.println(myTime);
+}
 
 
 
