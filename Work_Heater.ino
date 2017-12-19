@@ -22,8 +22,9 @@ int POT2 = A2;
 
 void printTime();
 void getTime();
-int getTarger();
+int getTarget();
 String computeTarget(int, int);
+void displayTime(String, String, String);
 
 String B_minute;
 String B_second;
@@ -62,37 +63,24 @@ void loop() {
   switchState = digitalRead(SWITCH); 
    
   if (switchState == HIGH){
-    getTime(); 
-    
-    display.clearDisplay(); 
-    display.setCursor(0, 5);
-    display.print("Time: ");
-    display.print(B_hour);
-    display.print(":");
-    display.print(B_minute); 
-    display.setCursor(0, 20);
-    display.print("Set:  ");
-    display.print(target);
-    display.display();
-
-    buttonState = digitalRead(BUTTON);
-
-    if (buttonState == HIGH){
-         Serial.println("Sending IR Code"); 
-         irsend.sendNEC(HEAT, 32); //send IR code
-         delay(300);
-    }
-
     HourState = analogRead(POT1); 
     MinState = analogRead(POT2);
     
     Hour = map(HourState, 0, 1020, 0, 23);
     Min = map(MinState, 0, 1020, 0, 59);
     target = computeTarget(Hour, Min); 
-
     
+    getTime(); 
+    displayTime(B_hour, B_minute, target); 
+    buttonState = digitalRead(BUTTON);
+
+    if (buttonState == HIGH){
+         irsend.sendNEC(HEAT, 32); //send IR code
+         delay(300);
+    }
   }
-  else{
+  
+  else{                 //Inside Sleep loop
     digitalWrite(LED, LOW);
     display.clearDisplay(); 
     display.display();
@@ -107,7 +95,6 @@ void loop() {
     check.concat(B_hour);
     check.concat(B_minute);
   
-  
     Serial.print("Target = ");
     Serial.println(target); 
     Serial.print("Check = ");
@@ -121,15 +108,7 @@ void loop() {
   
   
     if(flag == 1){
-      delay(60010); //wait for just over a minute to ensure the flag can't be set again.
-      digitalWrite(LED, LOW); 
-      delay(100);   
-        irsend.sendNEC(HEAT, 32); //send IR code
-      digitalWrite(LED, HIGH);   
-      delay(100);
-      digitalWrite(LED, LOW);
-      delay(300);
-      
+      autoTurnOn();
       flag = 0;
     }
   
@@ -177,5 +156,30 @@ String computeTarget(int pot1, int pot2){
   //Serial.println(myTime);
 }
 
+void displayTime(String B_hour, String B_minute, String target){
+  display.clearDisplay(); 
+  display.setCursor(0, 5);
+  display.print("Time: ");
+  display.print(B_hour);
+  display.print(":");
+  display.print(B_minute); 
+  display.setCursor(0, 20);
+  display.print("Set:  ");
+  display.print(target);
+  display.display();
+}
 
+
+void autoTurnOn(){
+  delay(60010); //wait for just over a minute to ensure the flag can't be set again.
+  digitalWrite(LED, LOW); 
+  delay(200);
+    irsend.sendNEC(TV, 32); //send IR code
+    delay(100); 
+    irsend.sendNEC(HEAT, 32); //send IR code
+  digitalWrite(LED, HIGH);   
+  delay(100);
+  digitalWrite(LED, LOW);
+  delay(300);
+}
 
