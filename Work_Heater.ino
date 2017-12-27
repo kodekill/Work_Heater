@@ -17,28 +17,26 @@ IRsend irsend;
 Adafruit_SSD1306 display(OLED_RESET);
 int BUTTON = 9;
 int SWITCH = 12;
-int POT1 = A7;
-int POT2 = A2;
+int POT1 = A2;
 
 void printTime();
 void getTime();
-int getTarget();
-String computeTarget(int, int);
+String CalculateTime(int); 
 void displayTime(String, String, String);
 
 String B_minute;
 String B_second;
-String B_hour; 
+String B_hour;
 int B_dayOfMonth;
 int B_month;
 int B_year;
 
 int switchState;
 int buttonState;
-int HourState;
-int MinState; 
+int timeState;
 int Hour;
-int Min; 
+int Min;
+String Time;
 
 int flag = 0;
 String check  = ""; 
@@ -63,12 +61,8 @@ void loop() {
   switchState = digitalRead(SWITCH); 
    
   if (switchState == HIGH){
-    HourState = analogRead(POT1); 
-    MinState = analogRead(POT2);
-    
-    Hour = map(HourState, 0, 1020, 0, 23);
-    Min = map(MinState, 0, 1020, 0, 59);
-    target = computeTarget(Hour, Min); 
+    timeState = (0.9 * timeState + 0.1 * analogRead(POT1));
+    target = Calculate(timeState);
     
     getTime(); 
     displayTime(B_hour, B_minute, target); 
@@ -89,19 +83,17 @@ void loop() {
     delay(200); 
    
     getTime();
-    getTarget();
    //printTime();
     
     check.concat(B_hour);
     check.concat(B_minute);
   
-    Serial.print("Target = ");
-    Serial.println(target); 
-    Serial.print("Check = ");
-    Serial.println(check); 
+//    Serial.print("Target = ");
+//    Serial.println(target); 
+//    Serial.print("Check = ");
+//    Serial.println(check); 
   
     if(check == target){
-      //Serial.println("Target Met");
       flag = 1;
       digitalWrite(LED, HIGH);
     }
@@ -113,48 +105,32 @@ void loop() {
     }
   
      check = ""; //reset the check variable.
-     //Serial.print("flag = ");
-     //Serial.println(flag); 
      delay(200);
   }
 }
 
 
-int getTarget(){
-    HourState = analogRead(POT1); 
-    MinState = analogRead(POT2);
-    
-    Hour = map(HourState, 0, 1020, 0, 23);
-    Min = map(MinState, 0, 1020, 0, 59);
-    target = computeTarget(Hour, Min);   
-    target.remove(2,1); //remove the : 
+String Calculate(int timeState){
+  int T_hours;
+  int T_min;
+  String T_Time; 
 
-    return target.toInt();
-}
-
-
-String computeTarget(int pot1, int pot2){
-  String myTime;
-  int int_myHour = pot1;
-  int int_myMin = pot2; 
+  int NewVal = map(timeState, 0, 700, 0, 144);
   
-  String myHour = String(pot1);
-  String myMin = String(pot2);
+  T_hours = (NewVal/6);
+  T_min   = (NewVal%6); 
 
-  if(int_myHour < 10){
-    myTime.concat("0");
+  if(T_hours < 10){
+    T_Time.concat("0"); 
   }
-  myTime.concat(myHour); 
-  myTime.concat(":");
-
-  if(int_myMin < 10){
-    myTime.concat("0");
-  }
-  myTime.concat(myMin); 
-
-  return myTime;
-  //Serial.println(myTime);
+  
+  T_Time.concat(T_hours);
+  T_Time.concat(T_min);
+  T_Time.concat("0");
+  
+  return T_Time;
 }
+
 
 void displayTime(String B_hour, String B_minute, String target){
   display.clearDisplay(); 
@@ -165,7 +141,17 @@ void displayTime(String B_hour, String B_minute, String target){
   display.print(B_minute); 
   display.setCursor(0, 20);
   display.print("Set:  ");
-  display.print(target);
+  
+  String C_hour = target;
+  C_hour.remove(2, 2);
+  
+  String C_min  = target;
+  C_min.remove(0, 2); 
+  
+  display.print(C_hour);
+  display.print(":");
+  display.print(C_min); 
+  
   display.display();
 }
 
