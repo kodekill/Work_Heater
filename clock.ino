@@ -120,7 +120,8 @@ void getTime(){
 
    B_dayOfMonth = dayOfMonth;
    B_month = month;
-   B_year = year;   
+   B_year = year;
+   B_dayOfWeek = dayOfWeek;
 }
 
 void printTime(){
@@ -133,6 +134,9 @@ void printTime(){
   
   Serial.print(B_second);
   Serial.println();
+
+  Serial.print("\n\n");
+  Serial.println(B_dayOfWeek); 
 
   delay(1000);
 }

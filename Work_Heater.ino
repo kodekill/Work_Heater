@@ -6,10 +6,12 @@
 
 #define OLED 0x3C
 #define DS3231_I2C_ADDRESS 0x68
-#define LED   13 //use to be 5 for some reason.....
+#define LED   17 
 #define OLED_RESET 10
 
-#define HEAT  0xFF23DC
+//#define HEAT  0xFF23DC
+
+#define HEAT  0x20DF10EF //delete this 
 #define HEAT2 0x690CEFE0
 #define TV    0x20DF10EF
 
@@ -30,6 +32,7 @@ String B_hour;
 int B_dayOfMonth;
 int B_month;
 int B_year;
+int B_dayOfWeek;
 
 int switchState;
 int buttonState;
@@ -54,21 +57,24 @@ void setup(){
   display.clearDisplay();
   display.setTextSize(.4);
   display.setTextColor(WHITE);
+  Blink();
 }
 
 
 void loop() {
   switchState = digitalRead(SWITCH); 
    
-  if (switchState == HIGH){
+  if (switchState == LOW){
     timeState = (0.9 * timeState + 0.1 * analogRead(POT1));
     target = Calculate(timeState);
     
-    getTime(); 
+    getTime();
+    
     displayTime(B_hour, B_minute, target); 
     buttonState = digitalRead(BUTTON);
 
     if (buttonState == HIGH){
+         Blink();
          irsend.sendNEC(HEAT, 32); //send IR code
          delay(300);
     }
@@ -83,7 +89,7 @@ void loop() {
     delay(200); 
    
     getTime();
-   //printTime();
+    //printTime();
     
     check.concat(B_hour);
     check.concat(B_minute);
@@ -93,12 +99,11 @@ void loop() {
 //    Serial.print("Check = ");
 //    Serial.println(check); 
   
-    if(check == target){
+    if((check == target) && (B_dayOfWeek < 6)){
       flag = 1;
       digitalWrite(LED, HIGH);
     }
-  
-  
+   
     if(flag == 1){
       autoTurnOn();
       flag = 0;
@@ -134,12 +139,12 @@ String Calculate(int timeState){
 
 void displayTime(String B_hour, String B_minute, String target){
   display.clearDisplay(); 
-  display.setCursor(0, 5);
+  display.setCursor(10, 5);
   display.print("Time: ");
   display.print(B_hour);
   display.print(":");
   display.print(B_minute); 
-  display.setCursor(0, 20);
+  display.setCursor(10, 20);
   display.print("Set:  ");
   
   String C_hour = target;
@@ -167,5 +172,17 @@ void autoTurnOn(){
   delay(100);
   digitalWrite(LED, LOW);
   delay(300);
+}
+
+void Blink(){
+  digitalWrite(LED, HIGH);
+  delay(200); 
+  digitalWrite(LED, LOW);
+  delay(200); 
+  digitalWrite(LED, HIGH);
+  delay(200); 
+  digitalWrite(LED, LOW);
+  delay(200);
+  digitalWrite(LED, HIGH);
 }
 
