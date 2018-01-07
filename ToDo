@@ -1,0 +1,14 @@
+TODO
+
+
+0 - Add a day check.
+  I want to have the heater turn on only Mon - Fri. That way I can leave the remote turned on during the weekend and only have
+  it turn on monday and not sat or sun. 
+  
+1 - Write the target to eeprom 
+   Right now the target gets set only when you go to the user mode. So if I were to turn it on and it started in auto mode, there
+   would be no target set. I first would have to go to user mode, set a target, then switch it to auto. 
+   
+2 - Read target only from the eeprom variable
+   I use to caculate the target each time I wanted to check it, wasting lots of cycles and battery to do so. If I can write the
+   target to eeprom, then I only have to read it from there, and not have to recalculate it everytime I want to read it. 
